@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base App Styling */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0d1117;
+  color: #e5e7eb; /* text-gray-200 */
+  overflow: hidden; /* Prevents whole-page scrolling, handling it inside components */
+}
+
+/* =========================================
+   Custom Scrollbar for Dark Theme IDE
+   ========================================= */
+
+/* Scrollbar width and height */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Scrollbar Track (Background) */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Scrollbar Thumb (The draggable part) */
+::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 4px;
+}
+
+/* Scrollbar Thumb on Hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #00a65a; /* Brand green on hover */
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #30363d transparent;
+}
