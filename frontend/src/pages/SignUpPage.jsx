@@ -1,32 +1,3 @@
-// import React, { useState } from 'react';
-// import { useNavigate, Link } from 'react-router-dom';
-// import MainNavbar from '../components/layout/MainNavbar';
-//   import { GoogleLogin } from '@react-oauth/google';
-// import api from '../api';
-
-// const SignupPage = () => {
-//   const [name, setName] = useState('');
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const navigate = useNavigate();
-
-
-//   const handleGoogleSignup = async (credentialResponse) => {
-//   try {
-//     // Backend ko Google token bhejen
-//     const res = await api.post('/auth/google', {
-//       token: credentialResponse.credential
-//     });
-
-//     localStorage.setItem('token', res.data.token);
-//     localStorage.setItem('user', JSON.stringify(res.data.user));
-    
-//     navigate('/dashboard');
-//   } catch (error) {
-//     console.error("Google Signup Error:", error);
-//     alert("Google authentication failed!");
-//   }
-// };
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import MainNavbar from '../components/layout/MainNavbar';

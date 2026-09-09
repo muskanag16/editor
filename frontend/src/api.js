@@ -18,7 +18,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Apna backend URL check kar lena
+  baseURL: import.meta.env.VITE_API_BASE_URL, // Apna backend URL check kar lena
 });
 
 // Axios Interceptor: Yeh har request (GET, POST, PUT, DELETE) se pehle chalega

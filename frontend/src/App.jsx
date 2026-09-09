@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
+import SignupPage from './pages/SignUpPage';
 import DashboardPage from './pages/DashboardPage'; // (Next step mein banayenge)
 import WorkspacePage from './pages/WorkspacePage'; // (Next step mein banayenge)
 import InvitationsPage from './pages/InvitationsPage';
