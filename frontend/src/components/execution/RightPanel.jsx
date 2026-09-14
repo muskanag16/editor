@@ -493,6 +493,204 @@
 
 // export default RightPanel;
 
+// import React, { useState, useEffect, useRef } from 'react';
+// import { Play, Send, Loader2, Smile } from 'lucide-react';
+// import axios from 'axios';
+// import EmojiPicker from 'emoji-picker-react';
+
+// const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp', socket, roomId, currentUser }) => {
+//   const [chatMessage, setChatMessage] = useState('');
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  
+//   const chatEndRef = useRef(null);
+
+//   const [chatHistory, setChatHistory] = useState([
+//     { id: 1, sender: 'System', text: 'Welcome to the project chat!', time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), isMe: false }
+//   ]);
+
+//   useEffect(() => {
+//     if (!socket) return;
+
+//     const handleReceiveMessage = (message) => {
+//       setChatHistory((prev) => [...prev, { 
+//         id: Date.now(), 
+//         sender: message.sender, 
+//         text: message.text, 
+//         time: message.time || new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), 
+//         isMe: false 
+//       }]);
+//     };
+
+//     socket.on('receive-message', handleReceiveMessage);
+
+//     return () => {
+//       socket.off('receive-message', handleReceiveMessage);
+//     };
+//   }, [socket]);
+
+//   useEffect(() => {
+//     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+//   }, [chatHistory]);
+
+//   const languageMap = {
+//     'c': 'gcc-head',
+//     'cpp': 'gcc-head',
+//     'python': 'cpython-head',
+//     'javascript': 'nodejs-head',
+//     'java': 'openjdk-head',
+//     'go': 'go-head',
+//     'rust': 'rust-head',
+//     'ruby': 'ruby-head',
+//     'kotlin': 'kotlin-head'
+//   };
+
+//   const handleRunCode = async () => {
+//     if (!code) return;
+//     setIsLoading(true);
+//     setOutput('Compiling and running code on cloud (Wandbox)...\n');
+
+//     try {
+//       const compilerName = languageMap[language] || 'gcc-head';
+//       const response = await axios.post('https://wandbox.org/api/compile.json', {
+//         compiler: compilerName,
+//         code: code,
+//         stdin: input || ''
+//       });
+
+//       const { status, program_message, compiler_message } = response.data;
+
+//       if (status !== "0") {
+//         setOutput(`⚠️ Error:\n${compiler_message ? compiler_message + '\n' : ''}${program_message || ''}`);
+//       } else {
+//         setOutput(`${program_message || ''}\n\n✅ [Program finished successfully]`);
+//       }
+//     } catch (error) {
+//       console.error('Execution Error:', error);
+//       setOutput('❌ Failed to connect to execution server. Please check your internet connection.');
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+
+//   const handleSendMessage = (e) => {
+//     e.preventDefault();
+//     if (!chatMessage.trim()) return;
+
+//     const messageData = {
+//       sender: currentUser || 'User',
+//       text: chatMessage,
+//       time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+//     };
+
+//     setChatHistory([...chatHistory, { ...messageData, id: Date.now(), isMe: true }]);
+    
+//     if (socket) {
+//       socket.emit('send-message', { projectId: roomId, ...messageData });
+//     }
+
+//     setChatMessage('');
+//     setShowEmojiPicker(false); 
+//   };
+
+//   const onEmojiClick = (emojiObject) => {
+//     setChatMessage(prev => prev + emojiObject.emoji);
+//   };
+
+//   return (
+//     <div className="w-96 bg-[#0d1117] border-l border-gray-800 flex flex-col h-full overflow-hidden p-4 gap-4">
+      
+//       {/* Input Box - shrink-0 fix applied */}
+//       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col h-[25%] shrink-0">
+//         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm">Input</div>
+//         <textarea 
+//           value={input}
+//           onChange={(e) => setInput(e.target.value)}
+//           placeholder="Enter program input here..."
+//           className="flex-1 bg-transparent text-gray-300 text-sm p-3 outline-none resize-none font-mono"
+//         />
+//       </div>
+
+//       {/* Output Box - shrink-0 fix applied */}
+//       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col h-[35%] shrink-0 shadow-lg relative">
+//         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm flex justify-between items-center bg-[#1c2128] rounded-t-lg">
+//           <span className="flex items-center gap-2">Output</span>
+//           <button 
+//             onClick={handleRunCode}
+//             disabled={isLoading}
+//             className={`flex items-center gap-1.5 px-4 py-1.5 text-white text-xs font-bold rounded shadow-sm transition-all ${
+//               isLoading ? 'bg-gray-600 cursor-not-allowed' : 'bg-[#00a65a] hover:bg-[#008f4d] active:scale-95'
+//             }`}
+//           >
+//             {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} fill="currentColor" />}
+//             {isLoading ? 'Running...' : 'Run Code'}
+//           </button>
+//         </div>
+//         <div className="flex-1 overflow-auto p-3 bg-[#0d1117] text-gray-300 text-sm font-mono whitespace-pre-wrap">
+//           {output || <span className="text-gray-600 italic">Press 'Run Code' to see output here.</span>}
+//         </div>
+//       </div>
+
+//       {/* Project Chat - min-h-0 fix applied */}
+//       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col flex-1 relative min-h-0">
+//         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm">Project Chat</div>
+        
+//         {/* Messages Area */}
+//         <div className="flex-1 overflow-y-auto p-3 space-y-3">
+//           {chatHistory.map((msg) => (
+//             <div key={msg.id} className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`}>
+//               <div className={`px-3 py-2 rounded-lg max-w-[85%] text-sm ${msg.isMe ? 'bg-[#00a65a] text-white rounded-tr-none' : 'bg-gray-800 text-gray-200 rounded-tl-none'}`}>
+//                 {msg.text}
+//               </div>
+//               <span className="text-[10px] text-gray-500 mt-1">{msg.sender} • {msg.time}</span>
+//             </div>
+//           ))}
+//           <div ref={chatEndRef} />
+//         </div>
+
+//         {/* Emoji Picker Popup */}
+//         {showEmojiPicker && (
+//           <div className="absolute bottom-16 left-0 z-50">
+//             <EmojiPicker 
+//               onEmojiClick={onEmojiClick} 
+//               theme="dark" 
+//               width={350} 
+//               height={300}
+//             />
+//           </div>
+//         )}
+
+//         {/* Chat Input Form */}
+//         <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-800 flex gap-2 items-center">
+//           <button 
+//             type="button" 
+//             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+//             className="text-gray-400 hover:text-[#00a65a] transition-colors"
+//           >
+//             <Smile size={20} />
+//           </button>
+          
+//           <input 
+//             type="text" 
+//             value={chatMessage}
+//             onChange={(e) => setChatMessage(e.target.value)}
+//             onFocus={() => setShowEmojiPicker(false)} 
+//             placeholder="Type a message..."
+//             className="flex-1 bg-[#0d1117] border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white outline-none focus:border-[#00a65a]"
+//           />
+          
+//           <button type="submit" disabled={!chatMessage.trim()} className="bg-[#00a65a] text-white p-1.5 rounded-md hover:bg-[#008f4d] disabled:opacity-50">
+//             <Send size={16} />
+//           </button>
+//         </form>
+//       </div>
+
+//     </div>
+//   );
+// };
+
+// export default RightPanel;
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Send, Loader2, Smile } from 'lucide-react';
 import axios from 'axios';
@@ -546,28 +744,44 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
   };
 
   const handleRunCode = async () => {
-    if (!code) return;
+    // 1. Validation: Prevent empty code execution
+    if (!code || !code.trim()) {
+      setOutput('⚠️ Warning: Code editor is empty. Please write some code before running.');
+      return;
+    }
+    
     setIsLoading(true);
     setOutput('Compiling and running code on cloud (Wandbox)...\n');
 
     try {
       const compilerName = languageMap[language] || 'gcc-head';
+      
+      // 2. Production setup: Added Timeout to prevent infinite UI hanging
       const response = await axios.post('https://wandbox.org/api/compile.json', {
         compiler: compilerName,
         code: code,
         stdin: input || ''
+      }, {
+        timeout: 15000 // 15 seconds timeout
       });
 
-      const { status, program_message, compiler_message } = response.data;
+      // 3. Robust Error Parsing
+      const { status, program_message, compiler_message, compiler_error } = response.data;
 
       if (status !== "0") {
-        setOutput(`⚠️ Error:\n${compiler_message ? compiler_message + '\n' : ''}${program_message || ''}`);
+        const errorMsg = compiler_error || compiler_message || 'Unknown compilation error';
+        setOutput(`⚠️ Execution Error:\n${errorMsg}\n${program_message || ''}`);
       } else {
         setOutput(`${program_message || ''}\n\n✅ [Program finished successfully]`);
       }
     } catch (error) {
       console.error('Execution Error:', error);
-      setOutput('❌ Failed to connect to execution server. Please check your internet connection.');
+      // 4. Specific Network Error Handling
+      if (error.code === 'ECONNABORTED') {
+        setOutput('❌ Request timed out. The execution server took too long to respond.');
+      } else {
+        setOutput(`❌ Execution failed: ${error.message || 'Please check your internet connection.'}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -579,7 +793,7 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
 
     const messageData = {
       sender: currentUser || 'User',
-      text: chatMessage,
+      text: chatMessage.trim(), // Trim added for clean data
       time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     };
 
@@ -600,18 +814,18 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
   return (
     <div className="w-96 bg-[#0d1117] border-l border-gray-800 flex flex-col h-full overflow-hidden p-4 gap-4">
       
-      {/* Input Box - shrink-0 fix applied */}
+      {/* Input Box */}
       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col h-[25%] shrink-0">
         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm">Input</div>
         <textarea 
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter program input here..."
-          className="flex-1 bg-transparent text-gray-300 text-sm p-3 outline-none resize-none font-mono"
+          className="flex-1 bg-transparent text-gray-300 text-sm p-3 outline-none resize-none font-mono focus:border-[#00a65a] transition-colors"
         />
       </div>
 
-      {/* Output Box - shrink-0 fix applied */}
+      {/* Output Box */}
       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col h-[35%] shrink-0 shadow-lg relative">
         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm flex justify-between items-center bg-[#1c2128] rounded-t-lg">
           <span className="flex items-center gap-2">Output</span>
@@ -631,15 +845,14 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
         </div>
       </div>
 
-      {/* Project Chat - min-h-0 fix applied */}
+      {/* Project Chat */}
       <div className="bg-[#161b22] border border-gray-800 rounded-lg flex flex-col flex-1 relative min-h-0">
         <div className="p-3 border-b border-gray-800 font-medium text-white text-sm">Project Chat</div>
         
-        {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3">
           {chatHistory.map((msg) => (
             <div key={msg.id} className={`flex flex-col ${msg.isMe ? 'items-end' : 'items-start'}`}>
-              <div className={`px-3 py-2 rounded-lg max-w-[85%] text-sm ${msg.isMe ? 'bg-[#00a65a] text-white rounded-tr-none' : 'bg-gray-800 text-gray-200 rounded-tl-none'}`}>
+              <div className={`px-3 py-2 rounded-lg max-w-[85%] text-sm break-words ${msg.isMe ? 'bg-[#00a65a] text-white rounded-tr-none' : 'bg-gray-800 text-gray-200 rounded-tl-none'}`}>
                 {msg.text}
               </div>
               <span className="text-[10px] text-gray-500 mt-1">{msg.sender} • {msg.time}</span>
@@ -648,9 +861,8 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
           <div ref={chatEndRef} />
         </div>
 
-        {/* Emoji Picker Popup */}
         {showEmojiPicker && (
-          <div className="absolute bottom-16 left-0 z-50">
+          <div className="absolute bottom-16 left-0 z-50 shadow-xl">
             <EmojiPicker 
               onEmojiClick={onEmojiClick} 
               theme="dark" 
@@ -660,7 +872,6 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
           </div>
         )}
 
-        {/* Chat Input Form */}
         <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-800 flex gap-2 items-center">
           <button 
             type="button" 
@@ -676,10 +887,10 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
             onChange={(e) => setChatMessage(e.target.value)}
             onFocus={() => setShowEmojiPicker(false)} 
             placeholder="Type a message..."
-            className="flex-1 bg-[#0d1117] border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white outline-none focus:border-[#00a65a]"
+            className="flex-1 bg-[#0d1117] border border-gray-700 rounded-md px-3 py-1.5 text-sm text-white outline-none focus:border-[#00a65a] transition-colors"
           />
           
-          <button type="submit" disabled={!chatMessage.trim()} className="bg-[#00a65a] text-white p-1.5 rounded-md hover:bg-[#008f4d] disabled:opacity-50">
+          <button type="submit" disabled={!chatMessage.trim()} className="bg-[#00a65a] text-white p-1.5 rounded-md hover:bg-[#008f4d] disabled:opacity-50 transition-colors">
             <Send size={16} />
           </button>
         </form>

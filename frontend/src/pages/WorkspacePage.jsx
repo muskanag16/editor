@@ -1013,7 +1013,9 @@ const WorkspacePage = () => {
     fetchProject();
 
     // Socket Setup (RightPanel Chat ke liye zaroori hai)
-    socketRef.current = io('http://localhost:5000'); 
+    // socketRef.current = io('http://localhost:5000'); 
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+socketRef.current = io(backendUrl);
     socketRef.current.emit('join-project', roomId);
 
     return () => {
