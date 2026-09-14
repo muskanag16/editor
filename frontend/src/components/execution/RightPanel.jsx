@@ -731,6 +731,56 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
+  // const handleRunCode = async () => {
+  //   if (!code || !code.trim()) {
+  //     setOutput('⚠️ Warning: Code editor is empty. Please write some code before running.');
+  //     return;
+  //   }
+    
+  //   setIsLoading(true);
+  //   setOutput('Compiling and running code on cloud...\n');
+
+  //   try {
+  //     // Piston API Payload Structure
+  //     const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+  //       language: language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language,
+  //       version: '*', // Automatically selects the latest stable compiler version
+  //       files: [
+  //         {
+  //           content: code
+  //         }
+  //       ],
+  //       stdin: input || ''
+  //     }, {
+  //       timeout: 15000 // 15-second timeout protection
+  //     });
+
+  //     const { run, compile } = response.data;
+
+  //     // 1. Handle Compilation Errors (for C, C++, Java, etc.)
+  //     if (compile && compile.code !== 0) {
+  //       setOutput(`⚠️ Compilation Error:\n${compile.output}`);
+  //       return;
+  //     }
+
+  //     // 2. Handle Runtime Errors & Success
+  //     if (run.code !== 0) {
+  //       setOutput(`⚠️ Execution Error (Exit code ${run.code}):\n${run.output}`);
+  //     } else {
+  //       setOutput(`${run.output}\n\n✅ [Program finished successfully]`);
+  //     }
+
+  //   } catch (error) {
+  //     console.error('Execution Error:', error);
+  //     if (error.code === 'ECONNABORTED') {
+  //       setOutput('❌ Request timed out. The server took too long to respond.');
+  //     } else {
+  //       setOutput(`❌ Execution failed: ${error.response?.data?.message || error.message}`);
+  //     }
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
   const handleRunCode = async () => {
     if (!code || !code.trim()) {
       setOutput('⚠️ Warning: Code editor is empty. Please write some code before running.');
@@ -738,44 +788,38 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
     }
     
     setIsLoading(true);
-    setOutput('Compiling and running code on cloud...\n');
+    setOutput('Compiling and running code on server...\n');
 
     try {
-      // Piston API Payload Structure
-      const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
-        language: language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language,
-        version: '*', // Automatically selects the latest stable compiler version
-        files: [
-          {
-            content: code
-          }
-        ],
+      // 1. Pointing directly to YOUR Render backend securely
+      // Ensure your backend has a route like: app.post('/api/execute', ...)
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+      
+      const response = await axios.post(`${backendUrl}/execute`, {
+        code: code,
+        language: language,
         stdin: input || ''
       }, {
         timeout: 15000 // 15-second timeout protection
       });
 
-      const { run, compile } = response.data;
+      // 2. Parsing the response from your JDoodle backend function
+      // JDoodle standard response format usually contains output, statusCode, etc.
+      const { output: executionResult, statusCode, error } = response.data;
 
-      // 1. Handle Compilation Errors (for C, C++, Java, etc.)
-      if (compile && compile.code !== 0) {
-        setOutput(`⚠️ Compilation Error:\n${compile.output}`);
-        return;
-      }
-
-      // 2. Handle Runtime Errors & Success
-      if (run.code !== 0) {
-        setOutput(`⚠️ Execution Error (Exit code ${run.code}):\n${run.output}`);
+      if (statusCode && statusCode !== 200) {
+        setOutput(`⚠️ Execution Error:\n${executionResult || error}`);
       } else {
-        setOutput(`${run.output}\n\n✅ [Program finished successfully]`);
+        setOutput(`${executionResult || response.data.output || ''}\n\n✅ [Program finished successfully]`);
       }
 
     } catch (error) {
       console.error('Execution Error:', error);
       if (error.code === 'ECONNABORTED') {
-        setOutput('❌ Request timed out. The server took too long to respond.');
+        setOutput('❌ Request timed out. Your backend took too long to respond.');
       } else {
-        setOutput(`❌ Execution failed: ${error.response?.data?.message || error.message}`);
+        // Fallback for CORS or backend crashing errors
+        setOutput(`❌ Server Connection Failed: ${error.response?.data?.message || error.message}. Ensure your backend /execute route is working.`);
       }
     } finally {
       setIsLoading(false);
