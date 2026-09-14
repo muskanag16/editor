@@ -731,56 +731,51 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatHistory]);
 
-  const languageMap = {
-    'c': 'gcc-head',
-    'cpp': 'gcc-head',
-    'python': 'cpython-head',
-    'javascript': 'nodejs-head',
-    'java': 'openjdk-head',
-    'go': 'go-head',
-    'rust': 'rust-head',
-    'ruby': 'ruby-head',
-    'kotlin': 'kotlin-head'
-  };
-
   const handleRunCode = async () => {
-    // 1. Validation: Prevent empty code execution
     if (!code || !code.trim()) {
       setOutput('⚠️ Warning: Code editor is empty. Please write some code before running.');
       return;
     }
     
     setIsLoading(true);
-    setOutput('Compiling and running code on cloud (Wandbox)...\n');
+    setOutput('Compiling and running code on cloud...\n');
 
     try {
-      const compilerName = languageMap[language] || 'gcc-head';
-      
-      // 2. Production setup: Added Timeout to prevent infinite UI hanging
-      const response = await axios.post('https://wandbox.org/api/compile.json', {
-        compiler: compilerName,
-        code: code,
+      // Piston API Payload Structure
+      const response = await axios.post('https://emkc.org/api/v2/piston/execute', {
+        language: language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language,
+        version: '*', // Automatically selects the latest stable compiler version
+        files: [
+          {
+            content: code
+          }
+        ],
         stdin: input || ''
       }, {
-        timeout: 15000 // 15 seconds timeout
+        timeout: 15000 // 15-second timeout protection
       });
 
-      // 3. Robust Error Parsing
-      const { status, program_message, compiler_message, compiler_error } = response.data;
+      const { run, compile } = response.data;
 
-      if (status !== "0") {
-        const errorMsg = compiler_error || compiler_message || 'Unknown compilation error';
-        setOutput(`⚠️ Execution Error:\n${errorMsg}\n${program_message || ''}`);
-      } else {
-        setOutput(`${program_message || ''}\n\n✅ [Program finished successfully]`);
+      // 1. Handle Compilation Errors (for C, C++, Java, etc.)
+      if (compile && compile.code !== 0) {
+        setOutput(`⚠️ Compilation Error:\n${compile.output}`);
+        return;
       }
+
+      // 2. Handle Runtime Errors & Success
+      if (run.code !== 0) {
+        setOutput(`⚠️ Execution Error (Exit code ${run.code}):\n${run.output}`);
+      } else {
+        setOutput(`${run.output}\n\n✅ [Program finished successfully]`);
+      }
+
     } catch (error) {
       console.error('Execution Error:', error);
-      // 4. Specific Network Error Handling
       if (error.code === 'ECONNABORTED') {
-        setOutput('❌ Request timed out. The execution server took too long to respond.');
+        setOutput('❌ Request timed out. The server took too long to respond.');
       } else {
-        setOutput(`❌ Execution failed: ${error.message || 'Please check your internet connection.'}`);
+        setOutput(`❌ Execution failed: ${error.response?.data?.message || error.message}`);
       }
     } finally {
       setIsLoading(false);
@@ -793,7 +788,7 @@ const RightPanel = ({ input, setInput, output, setOutput, code, language = 'cpp'
 
     const messageData = {
       sender: currentUser || 'User',
-      text: chatMessage.trim(), // Trim added for clean data
+      text: chatMessage.trim(), 
       time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
     };
 
